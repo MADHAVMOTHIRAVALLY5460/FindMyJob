@@ -90,10 +90,16 @@ function LoginForm({ onLogin }) {
         body: JSON.stringify(payload)
       })
 
-      const data = await response.json()
+      let data = {}
+      const textResponse = await response.text().catch(() => '')
+      try {
+        data = JSON.parse(textResponse)
+      } catch {
+        data = { error: textResponse || `Server returned error (${response.status})` }
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Authentication failed.')
+        throw new Error(data.error || `Authentication failed (${response.status}).`)
       }
 
       if (isRegister) {

@@ -103,10 +103,16 @@ function ResumeUpload({
         body: formData,
       })
 
-      const result = await response.json()
+      let result = {}
+      const textResponse = await response.text().catch(() => '')
+      try {
+        result = JSON.parse(textResponse)
+      } catch {
+        result = { error: textResponse || `Server returned error (${response.status})` }
+      }
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to upload resume.')
+        throw new Error(result.error || `Failed to upload resume (${response.status}).`)
       }
 
       const structured = result.data || {}
