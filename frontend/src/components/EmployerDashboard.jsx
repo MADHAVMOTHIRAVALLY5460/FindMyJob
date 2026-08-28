@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { jobDetails } from '../data/jobDetails'
+import { defaultMockApplicants } from '../data/mockData'
 import { API_BASE_URL } from '../config/api'
 import CreateJobModal from './CreateJobModal'
+import JobRequisitionCard from './JobRequisitionCard'
+import CandidateCard from './CandidateCard'
 
 function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }) {
   const [dbApplicants, setDbApplicants] = useState([])
   const [jobs, setJobs] = useState([jobDetails])
-  const [selectedJobId, setSelectedJobId] = useState('all')
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [analyzingId, setAnalyzingId] = useState(null)
@@ -55,7 +57,6 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
     setTimeout(() => setSuccessToast(''), 4000)
   }
 
-  // Trigger live 5-agent debate analysis
   const handleRunAnalysis = async (applicant, e) => {
     e?.stopPropagation()
     const appCandidateData = applicant.rawResult || {
@@ -87,7 +88,6 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
     }
   }
 
-  // Helper to generate default evaluator remarks if live analysis hasn't been run yet
   const getEvaluatorRemarks = (applicant) => {
     if (liveEvaluations[applicant.id]) {
       const live = liveEvaluations[applicant.id]
@@ -122,12 +122,11 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
       }
     }
 
-    // Default mock evaluator remarks
     return {
       isLiveAnalyzed: false,
       finalScore: applicant.matchScore || 88,
       recommendation: (applicant.matchScore || 88) >= 88 ? 'strong_hire' : 'hire',
-      judgeSummary: 'Candidate presents verified technical alignment for Cargonet AI with positive panel consensus.',
+      judgeSummary: 'Candidate presents verified technical alignment with positive panel consensus.',
       technical: {
         score: Math.min(95, (applicant.matchScore || 88) + 3),
         verdict: 'strong_fit',
@@ -151,7 +150,6 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
     }
   }
 
-  // Format SQLite applications
   const formattedDbApplicants = dbApplicants.map((app) => {
     const parsed = app.parsed || {}
     return {
@@ -172,46 +170,6 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
     }
   })
 
-  // Fallback demo applicants if database is empty
-  const defaultMockApplicants = [
-    {
-      id: 'cand_02',
-      name: 'Alex Rivera',
-      role: 'AI Engineer — Agentic Systems',
-      fileName: 'alex_rivera_cv.pdf',
-      date: 'Today, 09:15 AM',
-      status: 'Reviewed',
-      matchScore: 89,
-      skills: ['Python', 'FastAPI', 'Claude API', 'LangChain'],
-      rawResult: {
-        candidateId: 'cand_02',
-        name: 'Alex Rivera',
-        skills: [{ id: 'sk_01', name: 'Python', source: 'resume' }, { id: 'sk_02', name: 'FastAPI', source: 'resume' }],
-        experience: [{ id: 'ex_01', title: 'Senior AI Engineer', org: 'LogiTech Solutions', duration: '2023 - Present' }],
-      },
-      candidateName: 'Alex Rivera',
-      isLive: false,
-    },
-    {
-      id: 'cand_03',
-      name: 'Marcus Chen',
-      role: 'AI Engineer — Agentic Systems',
-      fileName: 'marcus_chen_resume.pdf',
-      date: 'Yesterday',
-      status: 'Pending Review',
-      matchScore: 82,
-      skills: ['Python', 'Docker', 'MongoDB', 'React.js'],
-      rawResult: {
-        candidateId: 'cand_03',
-        name: 'Marcus Chen',
-        skills: [{ id: 'sk_01', name: 'Python', source: 'resume' }, { id: 'sk_02', name: 'Docker', source: 'resume' }],
-        experience: [{ id: 'ex_01', title: 'Backend Developer', org: 'Apex Systems', duration: '2022 - 2024' }],
-      },
-      candidateName: 'Marcus Chen',
-      isLive: false,
-    },
-  ]
-
   const displayApplicants = formattedDbApplicants.length > 0
     ? formattedDbApplicants
     : defaultMockApplicants
@@ -227,21 +185,6 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
       setSelectedApplicant(enrichedApplicant)
     }
     onViewResult()
-  }
-
-  const getVerdictBadge = (verdict) => {
-    switch (verdict) {
-      case 'strong_fit':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'fit':
-        return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'weak_fit':
-        return 'bg-amber-50 text-amber-700 border-amber-200'
-      case 'not_fit':
-        return 'bg-red-50 text-red-700 border-red-200'
-      default:
-        return 'bg-zinc-100 text-zinc-700 border-zinc-200'
-    }
   }
 
   return (
@@ -280,7 +223,6 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            {/* Create Job Position Button */}
             <button
               type="button"
               onClick={() => setIsCreateJobOpen(true)}
@@ -292,7 +234,6 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
               <span>Post New Position</span>
             </button>
 
-            {/* Refresh Button */}
             <button
               type="button"
               onClick={() => { fetchApplications(); fetchJobs(); }}
@@ -345,43 +286,7 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {jobs.map((job, idx) => (
-            <div
-              key={idx}
-              className="p-4 rounded-2xl bg-white border border-zinc-200/80 shadow-xs hover:border-orange-300 transition-all flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-bold text-xs text-zinc-900 line-clamp-1">{job.title}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex-shrink-0">
-                    Active
-                  </span>
-                </div>
-                <p className="text-[11px] text-zinc-500 mt-1 flex items-center gap-2">
-                  <span>{job.location || 'Remote'}</span>
-                  <span>•</span>
-                  <span>{job.employmentType || 'Full-time'}</span>
-                  <span>•</span>
-                  <span className="text-orange-600 font-medium">{job.salary || 'Competitive'}</span>
-                </p>
-                <p className="text-xs text-zinc-600 mt-2 line-clamp-2 leading-relaxed">
-                  {job.aboutRole}
-                </p>
-              </div>
-
-              {/* Skills Tags */}
-              <div className="mt-3 pt-2.5 border-t border-zinc-100 flex flex-wrap gap-1">
-                {(job.skills || []).slice(0, 3).map((sk, sIdx) => (
-                  <span key={sIdx} className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 font-medium">
-                    {sk}
-                  </span>
-                ))}
-                {(job.skills || []).length > 3 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-100 text-zinc-400 font-medium">
-                    +{job.skills.length - 3} more
-                  </span>
-                )}
-              </div>
-            </div>
+            <JobRequisitionCard key={idx} job={job} />
           ))}
         </div>
       </div>
@@ -398,165 +303,16 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
           <span className="text-xs text-zinc-400 font-medium">{displayApplicants.length} Candidates</span>
         </div>
 
-        {displayApplicants.map((applicant, idx) => {
-          const remarks = getEvaluatorRemarks(applicant)
-          const isAnalyzingThis = analyzingId === applicant.id
-
-          return (
-            <div
-              key={idx}
-              className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-xs hover:border-zinc-300 transition-all"
-            >
-              {/* Header: Candidate Info & Overall Score */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-zinc-100">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-200 text-orange-600 flex items-center justify-center font-bold text-base flex-shrink-0 shadow-xs">
-                    {applicant.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-bold text-zinc-900">{applicant.name}</h3>
-                      <span className="font-mono text-xs font-semibold text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded">
-                        {applicant.id}
-                      </span>
-                      {applicant.isLive && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
-                          <span className="w-1 h-1 rounded-full bg-orange-500 animate-pulse"></span>
-                          LIVE
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      {applicant.role} • {applicant.fileName} • Submitted: {applicant.date}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Score & Main Action Buttons */}
-                <div className="flex items-center gap-3 self-end sm:self-center">
-                  <div className="text-right">
-                    <div className="flex items-center gap-1.5 justify-end">
-                      <span className="text-xl font-bold text-orange-600">{remarks.finalScore}</span>
-                      <span className="text-xs text-zinc-400">/100</span>
-                    </div>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase">
-                      {remarks.recommendation.replace('_', ' ')}
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => handleRunAnalysis(applicant, e)}
-                    disabled={isAnalyzingThis}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                    title="Re-run 4 Evaluators + Judge live analysis"
-                  >
-                    <svg className={`w-3.5 h-3.5 ${isAnalyzingThis ? 'animate-spin text-orange-600' : 'text-zinc-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <span>{isAnalyzingThis ? 'Debating...' : 'Run Debate'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleView(applicant)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-orange-600 hover:bg-orange-500 text-white shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>View Profile</span>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* 4 Agent Decisive Remarks Grid */}
-              <div className="mt-5">
-                <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
-                  Specialized AI Evaluator Verdicts & Decisive Remarks
-                </h4>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Agent 1: Technical Evaluator */}
-                  <div className="p-3.5 rounded-2xl border border-zinc-200/80 bg-zinc-50/60 hover:bg-zinc-50 transition-colors">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                        <span className="text-xs font-bold text-zinc-900">Technical Evaluator</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-blue-600">{remarks.technical.score}/100</span>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getVerdictBadge(remarks.technical.verdict)}`}>
-                          {remarks.technical.verdict.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-zinc-600 leading-relaxed italic">
-                      "{remarks.technical.remark}"
-                    </p>
-                  </div>
-
-                  {/* Agent 2: HR & Culture Evaluator */}
-                  <div className="p-3.5 rounded-2xl border border-zinc-200/80 bg-zinc-50/60 hover:bg-zinc-50 transition-colors">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                        <span className="text-xs font-bold text-zinc-900">HR & Culture</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-purple-600">{remarks.hrCulture.score}/100</span>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getVerdictBadge(remarks.hrCulture.verdict)}`}>
-                          {remarks.hrCulture.verdict.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-zinc-600 leading-relaxed italic">
-                      "{remarks.hrCulture.remark}"
-                    </p>
-                  </div>
-
-                  {/* Agent 3: Hiring Manager */}
-                  <div className="p-3.5 rounded-2xl border border-zinc-200/80 bg-zinc-50/60 hover:bg-zinc-50 transition-colors">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span className="text-xs font-bold text-zinc-900">Hiring Manager</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-emerald-600">{remarks.hiringManager.score}/100</span>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getVerdictBadge(remarks.hiringManager.verdict)}`}>
-                          {remarks.hiringManager.verdict.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-zinc-600 leading-relaxed italic">
-                      "{remarks.hiringManager.remark}"
-                    </p>
-                  </div>
-
-                  {/* Agent 4: The Skeptic */}
-                  <div className="p-3.5 rounded-2xl border border-zinc-200/80 bg-zinc-50/60 hover:bg-zinc-50 transition-colors">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                        <span className="text-xs font-bold text-zinc-900">The Skeptic</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-amber-600">{remarks.skeptic.score}/100</span>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getVerdictBadge(remarks.skeptic.verdict)}`}>
-                          {remarks.skeptic.verdict.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-zinc-600 leading-relaxed italic">
-                      "{remarks.skeptic.remark}"
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
+        {displayApplicants.map((applicant, idx) => (
+          <CandidateCard
+            key={idx}
+            applicant={applicant}
+            remarks={getEvaluatorRemarks(applicant)}
+            isAnalyzing={analyzingId === applicant.id}
+            onRunAnalysis={handleRunAnalysis}
+            onView={handleView}
+          />
+        ))}
       </div>
 
       {/* Create Job Modal */}
