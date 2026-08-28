@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API_BASE_URL } from '../config/api'
 
 function LoginForm({ onLogin }) {
   const [isRegister, setIsRegister] = useState(false) // false: Sign In, true: Create Account
@@ -66,8 +67,8 @@ function LoginForm({ onLogin }) {
 
     try {
       const endpoint = isRegister
-        ? 'http://localhost:8080/api/auth/register'
-        : 'http://localhost:8080/api/auth/login'
+        ? `${API_BASE_URL}/api/auth/register`
+        : `${API_BASE_URL}/api/auth/login`
 
       const payload = isRegister
         ? {

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { jobDetails } from '../data/jobDetails'
+import { API_BASE_URL } from '../config/api'
 
 function ResumeUpload({
   file,
@@ -97,7 +98,7 @@ function ResumeUpload({
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch('http://localhost:8080/api/upload', {
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       })

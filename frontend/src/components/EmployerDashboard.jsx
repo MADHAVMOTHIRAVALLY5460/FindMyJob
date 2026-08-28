@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { jobDetails } from '../data/jobDetails'
+import { API_BASE_URL } from '../config/api'
 
 function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }) {
   const [dbApplicants, setDbApplicants] = useState([])
@@ -14,7 +15,7 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
   const fetchApplications = async () => {
     try {
       setIsLoading(true)
-      const res = await fetch('http://localhost:8080/api/applications')
+      const res = await fetch(`${API_BASE_URL}/api/applications`)
       if (res.ok) {
         const data = await res.json()
         if (data.applications) {
@@ -41,7 +42,7 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
 
     try {
       setAnalyzingId(applicant.id)
-      const response = await fetch('http://localhost:8080/api/analyze', {
+      const response = await fetch(`${API_BASE_URL}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ candidateData: appCandidateData })

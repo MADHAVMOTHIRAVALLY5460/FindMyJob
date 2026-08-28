@@ -6,8 +6,10 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize SQLite database in backend directory
-const dbPath = path.join(__dirname, 'promptwars.db');
+// Initialize SQLite database (use /tmp on Vercel serverless, __dirname locally)
+const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const dbDir = isVercel ? '/tmp' : __dirname;
+const dbPath = path.join(dbDir, 'promptwars.db');
 const db = new DatabaseSync(dbPath);
 
 // Initialize Schema
