@@ -2,7 +2,6 @@ import "dotenv/config";
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import { PDFParse } from 'pdf-parse';
 import Groq from 'groq-sdk';
 import {
     createUser,
@@ -858,14 +857,20 @@ app.post(['/api/upload', '/upload'], upload.single('file'), async (req, res) => 
         }
 
         console.log(`\n[1/2] Received file: ${req.file.originalname} (${(req.file.size / 1024).toFixed(1)} KB)`);
-        console.log('Extracting raw text from PDF...');
+        // 1. Lazy-load PDF parser module only when an upload request is processed
+        const pdfModule = await import('pdf-parse');
+        const PDFParser = pdfModule.PDFParse || pdfModule.default || pdfModule;
 
-        // 1. Parse raw text from PDF buffer
-        const parser = new PDFParse({ data: req.file.buffer });
-        const textResult = await parser.getText();
-        await parser.destroy().catch(() => { });
-
-        const rawText = typeof textResult === 'string' ? textResult : (textResult?.text || '');
+        let rawText = '';
+        if (typeof PDFParser === 'function' && PDFParser.prototype && PDFParser.prototype.getText) {
+            const parser = new PDFParser({ data: req.file.buffer });
+            const textResult = await parser.getText();
+            await parser.destroy().catch(() => { });
+            rawText = typeof textResult === 'string' ? textResult : (textResult?.text || '');
+        } else if (typeof PDFParser === 'function') {
+            const parsed = await PDFParser(req.file.buffer);
+            rawText = parsed?.text || '';
+        }
 
         if (!rawText.trim()) {
             return res.status(400).json({
