@@ -7,8 +7,8 @@ import ResultModal from './components/ResultModal'
 import EmployerDashboard from './components/EmployerDashboard'
 
 function App() {
-  const [user, setUser] = useState(null) // null | { email, role: 'applicant' | 'employer', name }
-  const [currentStep, setCurrentStep] = useState(0) // 0: Job Details, 1: Upload Resume
+  const [user, setUser] = useState(null)
+  const [currentStep, setCurrentStep] = useState(0)
   const [file, setFile] = useState(null)
   const [submittedData, setSubmittedData] = useState(null)
   const [selectedApplicant, setSelectedApplicant] = useState(null)
@@ -40,18 +40,18 @@ function App() {
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-800 font-sans flex flex-col items-center justify-center p-4 sm:p-6 antialiased selection:bg-orange-100 selection:text-orange-900 overflow-x-hidden">
-      {/* Top Application Bar (Visible when logged in) */}
+      {/* Top Application Bar */}
       {user && (
-        <header className="w-full max-w-4xl mb-4 flex items-center justify-between py-3 px-4 rounded-2xl bg-white border border-zinc-200 shadow-xs">
+        <header className="w-full max-w-4xl mb-4 flex items-center justify-between py-3 px-4 rounded-2xl bg-white border border-zinc-200 shadow-xs" aria-label="FindMyJob application header">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+            <div aria-hidden="true" className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
               FMJ
             </div>
             <div>
               <span className="text-xs font-bold text-zinc-900 leading-tight block">
                 FindMyJob Portal
               </span>
-              <span className="text-[11px] text-zinc-400 leading-tight block">
+              <span className="text-[11px] text-zinc-500 leading-tight block">
                 {user.email} • {user.name}
               </span>
             </div>
@@ -59,10 +59,11 @@ function App() {
 
           <div className="flex items-center gap-3">
             <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${user.role === 'employer'
-                  ? 'bg-purple-50 text-purple-700 border-purple-200'
-                  : 'bg-orange-50 text-orange-700 border-orange-200'
-                }`}
+              className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+                user.role === 'employer'
+                  ? 'bg-purple-50 text-purple-900 border-purple-300'
+                  : 'bg-orange-50 text-orange-950 border-orange-300'
+              }`}
             >
               {user.role === 'employer' ? 'Employer / Recruiter' : 'Applicant'}
             </span>
@@ -70,9 +71,10 @@ function App() {
             <button
               type="button"
               onClick={handleLogout}
-              className="text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-xl border border-zinc-200 transition-colors cursor-pointer flex items-center gap-1.5"
+              aria-label="Sign out of FindMyJob"
+              className="text-xs font-semibold text-zinc-700 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-xl border border-zinc-200 transition-colors cursor-pointer flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
               <span>Sign Out</span>
@@ -83,28 +85,22 @@ function App() {
 
       {/* Main View Router */}
       {!user ? (
-        /* 1. Login & Create Account Screen (First Display) */
         <LoginForm onLogin={handleLogin} />
       ) : user.role === 'employer' ? (
-        /* 2. Employer Dashboard */
         <EmployerDashboard
           submittedData={submittedData}
           setSelectedApplicant={setSelectedApplicant}
           onViewResult={() => setShowResultModal(true)}
         />
       ) : (
-        /* 3. Applicant View (Job Details -> Upload Resume with Swipe Transition) */
-        <div className="w-full max-w-2xl my-4">
-          {/* Step Indicator Header */}
+        <main className="w-full max-w-2xl my-4" aria-label="Job application flow">
           <StepIndicator currentStep={currentStep} />
 
-          {/* Sliding Viewport Container with Smooth Swipe Transition */}
           <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
             <div
               className="flex w-full transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${currentStep * 100}%)` }}
             >
-              {/* Step 1: Job Description Screen */}
               <JobDetails
                 onNext={() => setCurrentStep(1)}
                 onViewResult={() => handleOpenModal(submittedData)}
@@ -112,7 +108,6 @@ function App() {
                 hasResults={!!submittedData}
               />
 
-              {/* Step 2: Upload Resume Screen */}
               <ResumeUpload
                 file={file}
                 setFile={setFile}
@@ -124,7 +119,7 @@ function App() {
               />
             </div>
           </div>
-        </div>
+        </main>
       )}
 
       {/* Extracted Profile Modal */}

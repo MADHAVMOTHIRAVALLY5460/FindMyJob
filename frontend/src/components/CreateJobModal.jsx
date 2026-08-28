@@ -72,17 +72,24 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-job-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+    >
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white border border-zinc-200 p-6 sm:p-8 shadow-2xl">
         {/* Modal Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-zinc-100">
+        <header className="flex items-start justify-between pb-4 border-b border-zinc-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200 text-orange-600 flex items-center justify-center font-bold text-sm shadow-xs">
+            <div aria-hidden="true" className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200 text-orange-600 flex items-center justify-center font-bold text-sm shadow-xs">
               +
             </div>
             <div>
-              <h3 className="text-xl font-bold text-zinc-900">Create New Job Position</h3>
-              <p className="text-xs text-zinc-500">
+              <h2 id="create-job-modal-title" className="text-xl font-bold text-zinc-900">
+                Create New Job Position
+              </h2>
+              <p className="text-xs text-zinc-600">
                 Define the requirements, evaluation criteria, and tech stack for the AI panel
               </p>
             </div>
@@ -91,18 +98,19 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+            aria-label="Close job creation modal"
+            className="p-2 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </div>
+        </header>
 
         {/* Error Notification */}
         {error && (
-          <div className="mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2.5">
-            <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div role="alert" className="mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2.5">
+            <svg className="w-4 h-4 text-red-600 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{error}</span>
@@ -114,10 +122,12 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
           {/* Row 1: Title & Department */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold text-zinc-800 mb-1.5">
-                Job Position Title <span className="text-orange-600">*</span>
+              <label htmlFor="job-title" className="block font-semibold text-zinc-800 mb-1.5">
+                Job Position Title <span className="text-orange-600" aria-hidden="true">*</span>
               </label>
               <input
+                id="job-title"
+                name="title"
                 type="text"
                 required
                 placeholder="e.g. Senior AI Infrastructure Engineer"
@@ -127,10 +137,12 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
               />
             </div>
             <div>
-              <label className="block font-semibold text-zinc-800 mb-1.5">
+              <label htmlFor="job-department" className="block font-semibold text-zinc-800 mb-1.5">
                 Department / Team
               </label>
               <input
+                id="job-department"
+                name="department"
                 type="text"
                 placeholder="e.g. Core AI & Systems"
                 value={department}
@@ -143,10 +155,12 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
           {/* Row 2: Location, Employment Type & Salary */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block font-semibold text-zinc-800 mb-1.5">
+              <label htmlFor="job-location" className="block font-semibold text-zinc-800 mb-1.5">
                 Location
               </label>
               <input
+                id="job-location"
+                name="location"
                 type="text"
                 placeholder="e.g. Remote / San Francisco"
                 value={location}
@@ -155,10 +169,12 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
               />
             </div>
             <div>
-              <label className="block font-semibold text-zinc-800 mb-1.5">
+              <label htmlFor="job-employment-type" className="block font-semibold text-zinc-800 mb-1.5">
                 Employment Type
               </label>
               <select
+                id="job-employment-type"
+                name="employmentType"
                 value={employmentType}
                 onChange={(e) => setEmploymentType(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-zinc-900 text-xs transition-all"
@@ -170,10 +186,12 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-zinc-800 mb-1.5">
+              <label htmlFor="job-salary" className="block font-semibold text-zinc-800 mb-1.5">
                 Salary / Compensation
               </label>
               <input
+                id="job-salary"
+                name="salary"
                 type="text"
                 placeholder="e.g. $160,000 - $210,000 + Equity"
                 value={salary}
@@ -185,10 +203,12 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
 
           {/* About the Role */}
           <div>
-            <label className="block font-semibold text-zinc-800 mb-1.5">
+            <label htmlFor="job-about-role" className="block font-semibold text-zinc-800 mb-1.5">
               About the Role & Mission
             </label>
             <textarea
+              id="job-about-role"
+              name="aboutRole"
               rows={2}
               placeholder="High-level description of what the role entails and why it matters..."
               value={aboutRole}
@@ -197,12 +217,14 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
             />
           </div>
 
-          {/* What You'll Do (1 per line) */}
+          {/* What You'll Do */}
           <div>
-            <label className="block font-semibold text-zinc-800 mb-1.5">
-              Key Responsibilities / What You'll Do <span className="text-zinc-400 font-normal">(1 item per line)</span>
+            <label htmlFor="job-what-youll-do" className="block font-semibold text-zinc-800 mb-1.5">
+              Key Responsibilities / What You'll Do <span className="text-zinc-500 font-normal">(1 item per line)</span>
             </label>
             <textarea
+              id="job-what-youll-do"
+              name="whatYoullDo"
               rows={3}
               placeholder="Enter responsibilities, one per line..."
               value={whatYoullDo}
@@ -211,12 +233,14 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
             />
           </div>
 
-          {/* What We're Looking For (1 per line) */}
+          {/* What We're Looking For */}
           <div>
-            <label className="block font-semibold text-zinc-800 mb-1.5">
-              Qualifications / What We're Looking For <span className="text-zinc-400 font-normal">(1 item per line)</span>
+            <label htmlFor="job-qualifications" className="block font-semibold text-zinc-800 mb-1.5">
+              Qualifications / What We're Looking For <span className="text-zinc-500 font-normal">(1 item per line)</span>
             </label>
             <textarea
+              id="job-qualifications"
+              name="whatWereLookingFor"
               rows={3}
               placeholder="Enter qualifications and technical signals..."
               value={whatWereLookingFor}
@@ -227,10 +251,12 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
 
           {/* What This Role Is NOT */}
           <div>
-            <label className="block font-semibold text-zinc-800 mb-1.5">
+            <label htmlFor="job-role-is-not" className="block font-semibold text-zinc-800 mb-1.5">
               "What This Role Is NOT" Guardrail Callout
             </label>
             <textarea
+              id="job-role-is-not"
+              name="whatRoleIsNot"
               rows={2}
               placeholder="Clarify common misconceptions about the role to help filter candidates..."
               value={whatRoleIsNot}
@@ -241,10 +267,12 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
 
           {/* Skills & Tech Stack */}
           <div>
-            <label className="block font-semibold text-zinc-800 mb-1.5">
-              Required Tech Stack & Skills <span className="text-zinc-400 font-normal">(comma-separated)</span>
+            <label htmlFor="job-skills" className="block font-semibold text-zinc-800 mb-1.5">
+              Required Tech Stack & Skills <span className="text-zinc-500 font-normal">(comma-separated)</span>
             </label>
             <input
+              id="job-skills"
+              name="skills"
               type="text"
               placeholder="e.g. Python, FastAPI, Docker, Multi-Agent Systems, LangGraph"
               value={skills}
@@ -254,22 +282,22 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
           </div>
 
           {/* Modal Footer Actions */}
-          <div className="pt-4 border-t border-zinc-100 flex items-center justify-end gap-3">
+          <footer className="pt-4 border-t border-zinc-100 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
             >
               {isSubmitting ? (
                 <>
-                  <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none">
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" aria-hidden="true" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -277,14 +305,14 @@ function CreateJobModal({ isOpen, onClose, onJobCreated }) {
                 </>
               ) : (
                 <>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   <span>Publish Job Position</span>
                 </>
               )}
             </button>
-          </div>
+          </footer>
         </form>
       </div>
     </div>

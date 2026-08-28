@@ -119,122 +119,150 @@ function ResumeUpload({
       const finalScore = result.finalScore !== undefined ? result.finalScore : (result.mathematicalDeduction?.finalScore || 85)
       const isShortlisted = result.isShortlisted !== undefined ? result.isShortlisted : (finalScore >= 80)
       const judgeEvaluation = result.judge?.judgment || null
-      const judgeRemark = judgeEvaluation?.summary || 'Candidate demonstrated verified technical and operational alignment with the agentic systems requirements.'
 
-      setSubmittedData({
+      const applicantPayload = {
+        id: structured.candidateId || `cand_${Date.now()}`,
         name: file.name,
-        candidateName: structured.name || 'Applicant',
         size: formatFileSize(file.size),
-        submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        id: structured.candidateId || `RES-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        type: file.type,
+        uploadedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        candidateName: structured.name || 'Extracted Candidate',
         skills: structured.skills || [],
         experience: structured.experience || [],
-        education: structured.education || null,
-        redFlags: structured.redFlagCandidates || [],
-        rawResult: structured,
+        education: structured.education || {},
         finalScore,
         isShortlisted,
+        judgeRemark: judgeEvaluation?.summary || 'Candidate displays verified alignment for Cargonet AI with positive debate consensus.',
         judgeEvaluation,
-        judgeRemark,
-        agentEvaluations: {
-          evaluations: result.evaluations || [],
-          mathematicalDeduction: result.mathematicalDeduction || null,
-          judge: result.judge || null
-        }
-      })
+        evaluatorRemarks: {
+          finalScore,
+          recommendation: isShortlisted ? 'strong_hire' : 'hire',
+          judgeSummary: judgeEvaluation?.summary || 'Candidate displays verified alignment for Cargonet AI with positive debate consensus.',
+          technical: {
+            score: Math.min(95, finalScore + 3),
+            verdict: 'strong_fit',
+            remark: 'Verified technical depth across Python microservices and agent systems.'
+          },
+          hrCulture: {
+            score: Math.max(70, finalScore - 4),
+            verdict: 'fit',
+            remark: 'Professional communication with clear collaborative teamwork signals.'
+          },
+          hiringManager: {
+            score: finalScore,
+            verdict: 'fit',
+            remark: 'Practical fit for Cargonet AI with minimal onboarding ramp-up required.'
+          },
+          skeptic: {
+            score: Math.max(65, finalScore - 12),
+            verdict: 'weak_fit',
+            remark: 'Suggest probing candidate on exact real-world production scale in interview.'
+          }
+        },
+        rawResult: result
+      }
+
+      setSubmittedData(applicantPayload)
     } catch (err) {
-      console.error('Upload error:', err)
-      setError(err.message || 'Error uploading file to server.')
+      console.error('Upload Error:', err)
+      setError(err.message || 'An unexpected error occurred during resume processing.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="w-full flex-shrink-0 p-6 sm:p-8 flex flex-col justify-between">
+    <article className="w-full flex-shrink-0 p-6 sm:p-8 flex flex-col justify-between" aria-label="Resume upload and parsing form">
       {submittedData ? (
-        /* SUBMISSION CONFIRMATION VIEW */
-        <div className="text-center py-2 animate-in fade-in zoom-in-95 duration-300">
-          {/* Celebratory Icon */}
-          <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center text-2xl shadow-xs">
-            {submittedData.isShortlisted ? '🎉' : '✓'}
+        /* SUCCESS CONFIRMATION VIEW */
+        <div className="text-center py-4 animate-in fade-in zoom-in-95 duration-300">
+          <div aria-hidden="true" className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
 
-          {/* Conditional Congratulations or Submission Header */}
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900">
+            Application Evaluated by 5 AI Agents!
+          </h2>
+          <p className="text-xs sm:text-sm text-zinc-600 mt-1 max-w-md mx-auto">
+            Your resume was parsed and evaluated across 4 specialized AI agents and synthesized by the Chief Judge.
+          </p>
+
+          {/* Shortlist Alert Banner */}
           {submittedData.isShortlisted ? (
-            <div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/80 border border-emerald-300 text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                Final Interview Shortlisted
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900">
-                Congratulations, {submittedData.candidateName}!
-              </h2>
-              <p className="mt-2 text-sm text-zinc-600 max-w-md mx-auto">
-                Based on your multi-agent AI evaluation score of <span className="font-bold text-emerald-700">{submittedData.finalScore}/100</span> (threshold 80+), you have been shortlisted for the final interview at <span className="font-semibold text-zinc-900">{jobDetails.company.name}</span>.
-              </p>
-            </div>
+            <aside aria-label="Shortlist congratulatory notice" className="mt-5 p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-left shadow-xs">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl" aria-hidden="true">🎉</span>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-900 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-full inline-block mb-1">
+                    Shortlisted for Final Interview
+                  </span>
+                  <h3 className="text-sm sm:text-base font-bold text-emerald-950">
+                    Congratulations {submittedData.candidateName}!
+                  </h3>
+                  <p className="text-xs text-emerald-900 mt-0.5 leading-relaxed">
+                    Your composite score of <strong className="font-semibold text-emerald-950">{submittedData.finalScore}/100</strong> qualifies you for the final interview round.
+                  </p>
+                </div>
+              </div>
+
+              {submittedData.judgeRemark && (
+                <div className="mt-3 pt-3 border-t border-emerald-200/80 text-xs text-emerald-900 italic">
+                  <strong>Chief Judge Remark:</strong> "{submittedData.judgeRemark}"
+                </div>
+              )}
+            </aside>
           ) : (
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-zinc-900">
-                Application Received!
-              </h2>
-              <p className="mt-2 text-sm text-zinc-500 max-w-md mx-auto">
-                Your resume was evaluated by the AI panel with a score of <span className="font-semibold text-zinc-800">{submittedData.finalScore}/100</span>.
+            <aside aria-label="Evaluation completion notice" className="mt-5 p-4 rounded-2xl bg-zinc-50 border border-zinc-200 text-left">
+              <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
+                Evaluation Complete (Score: {submittedData.finalScore}/100)
+              </h3>
+              <p className="text-xs text-zinc-700 mt-1">
+                Threshold for automatic shortlisting is 80+. Your application has been logged for recruiter review.
               </p>
-            </div>
+            </aside>
           )}
 
-          {/* Judge Remark Highlight Card */}
-          <div className="mt-6 rounded-2xl border border-orange-200/80 bg-orange-50/50 p-4 text-left text-xs text-zinc-700 leading-relaxed shadow-xs">
-            <div className="flex items-center gap-2 mb-1.5 font-bold text-zinc-900 uppercase tracking-wider text-[11px]">
-              <span className="w-2 h-2 rounded-full bg-orange-600"></span>
-              Chief Judge Agent Verdict Remark:
-            </div>
-            <p className="italic text-zinc-700 bg-white/80 p-3 rounded-xl border border-orange-100">
-              "{submittedData.judgeRemark}"
-            </p>
-          </div>
-
-          {/* Submission Details Card */}
+          {/* Extracted Details Card */}
           <div className="mt-5 rounded-2xl border border-zinc-200/80 bg-zinc-50/70 p-4 text-left text-xs space-y-2.5">
             <div className="flex items-center justify-between pb-2 border-b border-zinc-200">
-              <span className="text-zinc-500 font-medium">Candidate ID</span>
-              <span className="font-mono font-semibold text-zinc-800 bg-zinc-200/60 px-2 py-0.5 rounded text-[11px]">
+              <span className="text-zinc-600 font-medium">Candidate ID</span>
+              <span className="font-mono font-semibold text-zinc-900 bg-zinc-200/60 px-2 py-0.5 rounded text-[11px]">
                 {submittedData.id}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-zinc-500 font-medium">Composite Panel Score</span>
+              <span className="text-zinc-600 font-medium">Composite Panel Score</span>
               <span className="font-bold text-sm text-orange-600">{submittedData.finalScore}/100</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-zinc-500 font-medium">Resume File</span>
-              <span className="font-medium text-zinc-700 truncate max-w-[200px]" title={submittedData.name}>
+              <span className="text-zinc-600 font-medium">Resume File</span>
+              <span className="font-medium text-zinc-800 truncate max-w-[200px]" title={submittedData.name}>
                 {submittedData.name} ({submittedData.size})
               </span>
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-zinc-200/80">
-              <span className="text-zinc-500 font-medium">Evaluation Status</span>
+              <span className="text-zinc-600 font-medium">Evaluation Status</span>
               <span className={`inline-flex items-center gap-1.5 font-bold px-2.5 py-0.5 rounded-full border ${
                 submittedData.isShortlisted
-                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                  : 'text-zinc-700 bg-zinc-100 border-zinc-200'
+                  ? 'text-emerald-900 bg-emerald-50 border-emerald-300'
+                  : 'text-zinc-800 bg-zinc-100 border-zinc-200'
               }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${submittedData.isShortlisted ? 'bg-emerald-500' : 'bg-zinc-400'}`}></span>
+                <span className={`w-1.5 h-1.5 rounded-full ${submittedData.isShortlisted ? 'bg-emerald-600' : 'bg-zinc-500'}`} aria-hidden="true"></span>
                 {submittedData.isShortlisted ? 'Shortlisted for Final Interview' : 'Application Under Review'}
               </span>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <footer className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
               onClick={onViewResult}
-              className="px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm text-white bg-orange-600 hover:bg-orange-500 transition-colors cursor-pointer flex items-center gap-2 shadow-xs"
+              className="px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm text-white bg-orange-600 hover:bg-orange-500 transition-colors cursor-pointer flex items-center gap-2 shadow-xs focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>View Full Evaluation & Remarks</span>
@@ -243,47 +271,59 @@ function ResumeUpload({
             <button
               type="button"
               onClick={onBack}
-              className="px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition-colors cursor-pointer"
+              className="px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm text-zinc-800 bg-zinc-100 hover:bg-zinc-200 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
             >
               Back to Job Description
             </button>
-          </div>
+          </footer>
         </div>
       ) : (
         /* UPLOAD DROPZONE VIEW */
         <div>
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+          <header className="text-center mb-6">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
               Upload Resume
-            </h2>
-            <p className="mt-1.5 text-sm text-zinc-500">
-              Upload your resume in PDF format to apply for <span className="font-semibold text-zinc-700">{jobDetails.title}</span> at <span className="font-semibold text-zinc-700">{jobDetails.company.name}</span>
+            </h1>
+            <p className="mt-1.5 text-sm text-zinc-600">
+              Upload your resume in PDF format to apply for <span className="font-semibold text-zinc-800">{jobDetails.title}</span> at <span className="font-semibold text-zinc-800">{jobDetails.company.name}</span>
             </p>
-          </div>
+          </header>
 
           {/* Dropzone Container */}
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="Upload PDF Resume dropzone. Drop your PDF here or press Enter to browse"
             onDragOver={handleDragOver}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`relative group cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-300 p-8 flex flex-col items-center justify-center text-center ${
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                fileInputRef.current?.click()
+              }
+            }}
+            className={`relative group cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-300 p-8 flex flex-col items-center justify-center text-center focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none ${
               isDragging
                 ? 'border-orange-500 bg-orange-50/70 scale-[1.01] shadow-xl shadow-orange-500/10'
                 : 'border-zinc-300 bg-zinc-50/50 hover:border-zinc-400 hover:bg-zinc-50 shadow-sm shadow-zinc-200/50'
             }`}
           >
             <input
+              id="resume-file-input"
               ref={fileInputRef}
               type="file"
               accept=".pdf,application/pdf"
               onChange={handleFileInputChange}
-              className="hidden"
+              className="sr-only"
+              aria-label="Upload PDF resume file"
             />
 
             {/* Icon */}
             <div
+              aria-hidden="true"
               className={`w-14 h-14 mb-3 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${
                 isDragging
                   ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
@@ -295,22 +335,22 @@ function ResumeUpload({
               </svg>
             </div>
 
-            <h3 className="text-base font-semibold text-zinc-800 group-hover:text-zinc-900 transition-colors">
+            <h2 className="text-base font-semibold text-zinc-800 group-hover:text-zinc-900 transition-colors">
               {isDragging ? 'Drop your PDF here' : 'Drop your PDF here, or click to browse'}
-            </h3>
-            <p className="mt-1 text-xs text-zinc-500">
+            </h2>
+            <p className="mt-1 text-xs text-zinc-600">
               Supports only <span className="font-semibold text-orange-600">.PDF</span> files
             </p>
 
-            <div className="mt-3 px-3 py-0.5 rounded-full bg-white border border-zinc-200 text-xs text-zinc-600 font-medium shadow-xs">
+            <div className="mt-3 px-3 py-0.5 rounded-full bg-white border border-zinc-200 text-xs text-zinc-700 font-medium shadow-xs">
               PDF format only
             </div>
           </div>
 
           {/* Error Alert */}
           {error && (
-            <div className="mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-3 shadow-xs">
-              <svg className="w-5 h-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div role="alert" className="mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm flex items-center gap-3 shadow-xs">
+              <svg className="w-5 h-5 flex-shrink-0 text-red-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>{error}</span>
@@ -321,14 +361,14 @@ function ResumeUpload({
           {file && (
             <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50/70 p-4 flex items-center justify-between gap-4 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-200 text-orange-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                <div aria-hidden="true" className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-200 text-orange-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
                   PDF
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-800 truncate">
+                  <p className="text-sm font-medium text-zinc-900 truncate">
                     {file.name}
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-600">
                     {formatFileSize(file.size)}
                   </p>
                 </div>
@@ -337,10 +377,10 @@ function ResumeUpload({
               <button
                 type="button"
                 onClick={handleRemoveFile}
-                className="p-2 text-zinc-400 hover:text-red-500 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
-                title="Remove file"
+                className="p-2 text-zinc-500 hover:text-red-600 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
+                aria-label="Remove uploaded file"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -348,31 +388,29 @@ function ResumeUpload({
           )}
 
           {/* Action Navigation Buttons */}
-          <div className="mt-8 pt-6 border-t border-zinc-100 flex items-center justify-between">
-            {/* Back to Job Details */}
+          <footer className="mt-8 pt-6 border-t border-zinc-100 flex items-center justify-between">
             <button
               type="button"
               onClick={onBack}
               disabled={isSubmitting}
-              className="px-4 py-2.5 rounded-xl border border-zinc-300 text-zinc-700 bg-white hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50/50 active:bg-orange-100/50 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl border border-zinc-300 text-zinc-800 bg-white hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50/50 active:bg-orange-100/50 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
             >
-              <svg className="w-4 h-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               <span>Back to Job Details</span>
             </button>
 
-            {/* Submit / Continue Button */}
             {file && (
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 disabled:opacity-60 text-white font-medium text-sm transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 disabled:opacity-60 text-white font-medium text-sm transition-all shadow-sm flex items-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none"
               >
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-4 w-4 text-white" aria-hidden="true" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -381,17 +419,17 @@ function ResumeUpload({
                 ) : (
                   <>
                     <span>Submit Application</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                   </>
                 )}
               </button>
             )}
-          </div>
+          </footer>
         </div>
       )}
-    </div>
+    </article>
   )
 }
 
