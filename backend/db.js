@@ -3,8 +3,10 @@ import crypto from 'node:crypto';
 // In-Memory Storage Adapter (100% crash-proof across all Node versions & Serverless environments)
 const memoryUsers = new Map();
 const memoryApplications = [];
+const memoryJobs = [];
 let nextUserId = 1;
 let nextAppId = 1;
+let nextJobId = 1;
 
 /**
  * Hash password using crypto.scrypt
@@ -83,12 +85,13 @@ export function getUserById(id) {
 /**
  * Save parsed resume application
  */
-export function saveApplication({ candidateId, userId = null, candidateName, fileName, fileSize, parsedJson }) {
+export function saveApplication({ candidateId, jobId = 'job_01', userId = null, candidateName, fileName, fileSize, parsedJson }) {
   const jsonStr = typeof parsedJson === 'string' ? parsedJson : JSON.stringify(parsedJson);
 
   const app = {
     id: nextAppId++,
     candidate_id: candidateId,
+    job_id: jobId,
     user_id: userId,
     candidate_name: candidateName,
     file_name: fileName,
@@ -110,6 +113,58 @@ export function getAllApplications() {
   }));
 }
 
+/**
+ * Create a new job requisition / position
+ */
+export function createJob({
+  title,
+  company = { name: 'Cargonet AI', industry: 'Logistics Tech', size: '50-100 employees' },
+  department = 'Engineering',
+  location = 'Remote / San Francisco, CA',
+  employmentType = 'Full-time',
+  salary = '$150k - $190k • Equity',
+  aboutRole = '',
+  whatYoullDo = [],
+  whatWereLookingFor = [],
+  whatRoleIsNot = '',
+  skills = []
+}) {
+  const job = {
+    id: `job_${String(nextJobId++).padStart(2, '0')}`,
+    title: title.trim(),
+    company: typeof company === 'string' ? { name: company, industry: 'Tech', size: '50-100 employees' } : company,
+    department: department.trim(),
+    location: location.trim(),
+    employmentType: employmentType.trim(),
+    salary: salary.trim(),
+    aboutRole: aboutRole.trim(),
+    whatYoullDo: Array.isArray(whatYoullDo) ? whatYoullDo : [whatYoullDo],
+    whatWereLookingFor: Array.isArray(whatWereLookingFor) ? whatWereLookingFor : [whatWereLookingFor],
+    whatRoleIsNot: whatRoleIsNot.trim(),
+    skills: Array.isArray(skills) ? skills : skills.split(',').map(s => s.trim()).filter(Boolean),
+    status: 'Open',
+    applicantCount: 0,
+    createdAt: new Date().toISOString()
+  };
+
+  memoryJobs.unshift(job);
+  return job;
+}
+
+/**
+ * Retrieve all job listings
+ */
+export function getAllJobs() {
+  return memoryJobs;
+}
+
+/**
+ * Get job by ID
+ */
+export function getJobById(id) {
+  return memoryJobs.find(j => j.id === id) || null;
+}
+
 // Pre-seed demo accounts
 try {
   createUser({
@@ -129,12 +184,44 @@ try {
   // Ignored
 }
 
+// Pre-seed default Cargonet AI job
+createJob({
+  title: 'AI Engineer — Agentic Systems',
+  company: {
+    name: 'Cargonet AI',
+    industry: 'Logistics & Supply Chain Tech',
+    size: '50-150 employees'
+  },
+  department: 'Applied AI & Core Engineering',
+  location: 'Remote (US/EU) / San Francisco',
+  employmentType: 'Full-time',
+  salary: '$160,000 - $210,000 + Equity',
+  aboutRole: 'Cargonet AI is building the next-generation autonomous logistics operating system. We are looking for an AI Engineer specializing in agentic workflows to build, evaluate, and scale autonomous dispatch and rate-negotiation agents.',
+  whatYoullDo: [
+    'Architect multi-agent coordination pipelines for freight matching and automated pricing negotiation.',
+    'Build reliable LLM evaluation benchmarks and deterministic fallback guardrails.',
+    'Integrate vector search (RAG) over structured transportation contracts and tariff tables.',
+    'Collaborate directly with product and operations to deploy resilient microservices into production.'
+  ],
+  whatWereLookingFor: [
+    '3+ years experience building production software with Python (FastAPI, asyncio) and modern backend frameworks.',
+    'Hands-on experience deploying LLM agent frameworks (LangGraph, AutoGen, CrewAI, or bespoke state machines).',
+    'Demonstrated understanding of deterministic validation, structured output schemas, and latency optimization.',
+    'Clear, humble communication with high agency in fast-paced startup environments.'
+  ],
+  whatRoleIsNot: 'This is NOT a prompt engineering or basic wrapper role. You will be building resilient distributed systems with rigorous evaluation harnesses, telemetry, and automated unit testing.',
+  skills: ['Python', 'FastAPI', 'Multi-Agent Systems', 'Vector Search (RAG)', 'Docker', 'PostgreSQL / SQLite', 'LangGraph', 'REST APIs']
+});
+
 export default {
   createUser,
   getUserByEmail,
   getUserById,
   saveApplication,
   getAllApplications,
+  createJob,
+  getAllJobs,
+  getJobById,
   hashPassword,
   verifyPassword
 };

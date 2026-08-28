@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react'
 import { jobDetails } from '../data/jobDetails'
 import { API_BASE_URL } from '../config/api'
+import CreateJobModal from './CreateJobModal'
 
 function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }) {
   const [dbApplicants, setDbApplicants] = useState([])
+  const [jobs, setJobs] = useState([jobDetails])
+  const [selectedJobId, setSelectedJobId] = useState('all')
+  const [isCreateJobOpen, setIsCreateJobOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [analyzingId, setAnalyzingId] = useState(null)
   const [liveEvaluations, setLiveEvaluations] = useState({})
+  const [successToast, setSuccessToast] = useState('')
 
   useEffect(() => {
     fetchApplications()
+    fetchJobs()
   }, [submittedData])
 
   const fetchApplications = async () => {
@@ -23,10 +29,30 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
         }
       }
     } catch (err) {
-      console.error('Failed to load applications from SQLite:', err)
+      console.error('Failed to load applications:', err)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const fetchJobs = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/jobs`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.jobs && data.jobs.length > 0) {
+          setJobs(data.jobs)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load jobs:', err)
+    }
+  }
+
+  const handleJobCreated = (newJob) => {
+    setJobs(prev => [newJob, ...prev.filter(j => j.id !== newJob.id)])
+    setSuccessToast(`Job position "${newJob.title}" has been successfully published!`)
+    setTimeout(() => setSuccessToast(''), 4000)
   }
 
   // Trigger live 5-agent debate analysis
@@ -131,11 +157,11 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
     return {
       id: app.candidate_id || `cand_${app.id}`,
       name: app.candidate_name || 'Candidate',
-      role: jobDetails.title,
+      role: app.job_title || jobDetails.title,
       fileName: app.file_name,
       date: new Date(app.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'AI Evaluated',
-      matchScore: 91,
+      matchScore: parsed.finalScore || 91,
       skills: (parsed.skills || []).map((s) => s.name || s).slice(0, 4),
       experience: parsed.experience || [],
       education: parsed.education || {},
@@ -220,6 +246,23 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
 
   return (
     <div className="w-full max-w-4xl my-6 animate-in fade-in zoom-in-95 duration-300">
+      {/* Toast Notification */}
+      {successToast && (
+        <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between shadow-xs animate-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-2">
+            <span className="text-base">✓</span>
+            <span>{successToast}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSuccessToast('')}
+            className="text-emerald-600 hover:text-emerald-900 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Dashboard Top Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -232,20 +275,35 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
               Employer Dashboard
             </h1>
             <p className="text-sm text-zinc-500 mt-1">
-              Multi-Agent AI evaluation panel, candidate scores, and decisive remarks
+              Multi-Agent AI evaluation panel, candidate scores, and job requisition management
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={fetchApplications}
-            className="px-3 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-medium text-zinc-700 transition-colors flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-          >
-            <svg className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-orange-600' : 'text-zinc-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>Refresh</span>
-          </button>
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            {/* Create Job Position Button */}
+            <button
+              type="button"
+              onClick={() => setIsCreateJobOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white font-semibold text-xs transition-all shadow-xs flex items-center gap-2 cursor-pointer group"
+            >
+              <svg className="w-4 h-4 transition-transform group-hover:rotate-90 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Post New Position</span>
+            </button>
+
+            {/* Refresh Button */}
+            <button
+              type="button"
+              onClick={() => { fetchApplications(); fetchJobs(); }}
+              className="p-2.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-600 transition-colors flex items-center justify-center cursor-pointer shadow-xs"
+              title="Refresh Pipeline"
+            >
+              <svg className={`w-4 h-4 ${isLoading ? 'animate-spin text-orange-600' : 'text-zinc-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -255,17 +313,76 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
             <p className="text-2xl font-bold text-zinc-900 mt-1">{displayApplicants.length}</p>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-zinc-200 shadow-xs">
+            <span className="text-xs text-zinc-500 font-medium">Active Requisitions</span>
+            <p className="text-2xl font-bold text-orange-600 mt-1">{jobs.length} Open</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-white border border-zinc-200 shadow-xs">
             <span className="text-xs text-zinc-500 font-medium">AI Panel Evaluators</span>
-            <p className="text-2xl font-bold text-orange-600 mt-1">4 Agents + Judge</p>
+            <p className="text-2xl font-bold text-zinc-900 mt-1">4 Agents + Judge</p>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-zinc-200 shadow-xs">
             <span className="text-xs text-zinc-500 font-medium">Avg. Panel Score</span>
             <p className="text-2xl font-bold text-zinc-900 mt-1">87%</p>
           </div>
-          <div className="p-4 rounded-2xl bg-white border border-zinc-200 shadow-xs">
-            <span className="text-xs text-zinc-500 font-medium">Active Requisition</span>
-            <p className="text-2xl font-bold text-zinc-900 mt-1">1 Open</p>
+        </div>
+      </div>
+
+      {/* Active Job Requisitions List */}
+      <div className="mb-8 p-5 rounded-3xl bg-zinc-50/70 border border-zinc-200">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-bold text-zinc-900">Active Job Positions ({jobs.length})</h2>
+            <p className="text-xs text-zinc-500">Live roles evaluated by the FindMyJob AI Panel</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsCreateJobOpen(true)}
+            className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer"
+          >
+            <span>+ Add Position</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {jobs.map((job, idx) => (
+            <div
+              key={idx}
+              className="p-4 rounded-2xl bg-white border border-zinc-200/80 shadow-xs hover:border-orange-300 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-bold text-xs text-zinc-900 line-clamp-1">{job.title}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex-shrink-0">
+                    Active
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-500 mt-1 flex items-center gap-2">
+                  <span>{job.location || 'Remote'}</span>
+                  <span>•</span>
+                  <span>{job.employmentType || 'Full-time'}</span>
+                  <span>•</span>
+                  <span className="text-orange-600 font-medium">{job.salary || 'Competitive'}</span>
+                </p>
+                <p className="text-xs text-zinc-600 mt-2 line-clamp-2 leading-relaxed">
+                  {job.aboutRole}
+                </p>
+              </div>
+
+              {/* Skills Tags */}
+              <div className="mt-3 pt-2.5 border-t border-zinc-100 flex flex-wrap gap-1">
+                {(job.skills || []).slice(0, 3).map((sk, sIdx) => (
+                  <span key={sIdx} className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 font-medium">
+                    {sk}
+                  </span>
+                ))}
+                {(job.skills || []).length > 3 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-100 text-zinc-400 font-medium">
+                    +{job.skills.length - 3} more
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -305,12 +422,12 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
                       {applicant.isLive && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
                           <span className="w-1 h-1 rounded-full bg-orange-500 animate-pulse"></span>
-                          SQLITE
+                          LIVE
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-zinc-500 mt-1">
-                      {applicant.fileName} • Submitted: {applicant.date}
+                      {applicant.role} • {applicant.fileName} • Submitted: {applicant.date}
                     </p>
                   </div>
                 </div>
@@ -441,6 +558,13 @@ function EmployerDashboard({ submittedData, onViewResult, setSelectedApplicant }
           )
         })}
       </div>
+
+      {/* Create Job Modal */}
+      <CreateJobModal
+        isOpen={isCreateJobOpen}
+        onClose={() => setIsCreateJobOpen(false)}
+        onJobCreated={handleJobCreated}
+      />
     </div>
   )
 }

@@ -8,7 +8,10 @@ import {
     getUserByEmail,
     verifyPassword,
     saveApplication,
-    getAllApplications
+    getAllApplications,
+    createJob,
+    getAllJobs,
+    getJobById
 } from './db.js';
 
 const app = express();
@@ -791,6 +794,88 @@ app.get(['/api/applications', '/applications'], (req, res) => {
     } catch (err) {
         console.error('Fetch applications error:', err);
         return res.status(500).json({ error: 'Failed to fetch applications.' });
+    }
+});
+
+// ================= JOB POSITION / REQUISITION ROUTES =================
+
+// Create new Job Position
+app.post(['/api/jobs', '/jobs'], (req, res) => {
+    try {
+        const {
+            title,
+            company,
+            department,
+            location,
+            employmentType,
+            salary,
+            aboutRole,
+            whatYoullDo,
+            whatWereLookingFor,
+            whatRoleIsNot,
+            skills
+        } = req.body;
+
+        if (!title || !title.trim()) {
+            return res.status(400).json({ error: 'Job title is required.' });
+        }
+
+        const newJob = createJob({
+            title,
+            company: company || { name: 'Cargonet AI', industry: 'Logistics Tech', size: '50-150 employees' },
+            department: department || 'Engineering',
+            location: location || 'Remote / Hybrid',
+            employmentType: employmentType || 'Full-time',
+            salary: salary || 'Competitive + Equity',
+            aboutRole: aboutRole || `We are looking for an experienced ${title} to join our high-growth team.`,
+            whatYoullDo: Array.isArray(whatYoullDo) ? whatYoullDo : (whatYoullDo ? whatYoullDo.split('\n').filter(Boolean) : ['Contribute to high-impact projects.']),
+            whatWereLookingFor: Array.isArray(whatWereLookingFor) ? whatWereLookingFor : (whatWereLookingFor ? whatWereLookingFor.split('\n').filter(Boolean) : ['Proven technical expertise.']),
+            whatRoleIsNot: whatRoleIsNot || 'This is not a generalist or non-technical position.',
+            skills: Array.isArray(skills) ? skills : (skills ? skills.split(',').map(s => s.trim()).filter(Boolean) : ['Software Engineering'])
+        });
+
+        console.log(`[JOB] Created new job position: ${newJob.title} (${newJob.id})`);
+
+        return res.status(201).json({
+            success: true,
+            message: 'Job position created successfully',
+            job: newJob
+        });
+    } catch (err) {
+        console.error('Create job error:', err);
+        return res.status(500).json({ error: 'Failed to create job position.', details: err.message });
+    }
+});
+
+// Get all active Job Positions
+app.get(['/api/jobs', '/jobs'], (req, res) => {
+    try {
+        const jobs = getAllJobs();
+        return res.status(200).json({
+            success: true,
+            count: jobs.length,
+            jobs
+        });
+    } catch (err) {
+        console.error('Fetch jobs error:', err);
+        return res.status(500).json({ error: 'Failed to fetch job positions.' });
+    }
+});
+
+// Get Job Position by ID
+app.get(['/api/jobs/:id', '/jobs/:id'], (req, res) => {
+    try {
+        const job = getJobById(req.params.id);
+        if (!job) {
+            return res.status(404).json({ error: 'Job position not found.' });
+        }
+        return res.status(200).json({
+            success: true,
+            job
+        });
+    } catch (err) {
+        console.error('Fetch job error:', err);
+        return res.status(500).json({ error: 'Failed to fetch job position details.' });
     }
 });
 
