@@ -15,9 +15,9 @@ import {
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Initialize Groq SDK
+// Initialize Groq SDK with fallback to prevent cold-start crash
 const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
+    apiKey: process.env.GROQ_API_KEY || 'gsk_cold_start_placeholder_key',
 });
 
 // Middlewares
@@ -689,10 +689,19 @@ app.get('/', (req, res) => {
     res.json({ message: 'Backend is running' });
 });
 
-// ================= AUTHENTICATION ROUTES (SQLite) =================
+// Health Check Route
+app.get(['/api/health', '/health', '/api', '/api/'], (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        service: 'FindMyJob Backend API',
+        time: new Date().toISOString()
+    });
+});
+
+// ================= AUTHENTICATION ROUTES =================
 
 // Register Route
-app.post('/api/auth/register', (req, res) => {
+app.post(['/api/auth/register', '/auth/register'], (req, res) => {
     try {
         const { name, email, password, role, companyName } = req.body;
 
@@ -728,7 +737,7 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 // Login Route
-app.post('/api/auth/login', (req, res) => {
+app.post(['/api/auth/login', '/auth/login'], (req, res) => {
     try {
         const { email, password, role } = req.body;
 
@@ -772,7 +781,7 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 // Route to get all applications (for Employer Dashboard)
-app.get('/api/applications', (req, res) => {
+app.get(['/api/applications', '/applications'], (req, res) => {
     try {
         const applications = getAllApplications();
         return res.status(200).json({
@@ -789,7 +798,7 @@ app.get('/api/applications', (req, res) => {
 // ================= MULTI-MODEL AI ANALYSIS ROUTE =================
 
 // Route to get info about the 4 configured models
-app.get('/api/models', (req, res) => {
+app.get(['/api/models', '/models'], (req, res) => {
     res.status(200).json({
         success: true,
         models: MULTI_MODEL_CONFIGS
@@ -797,7 +806,7 @@ app.get('/api/models', (req, res) => {
 });
 
 // Route to send candidate data to 4 AI models simultaneously
-app.post('/api/analyze', async (req, res) => {
+app.post(['/api/analyze', '/analyze'], async (req, res) => {
     try {
         const { candidateData, prompts } = req.body;
 
@@ -809,7 +818,7 @@ app.post('/api/analyze', async (req, res) => {
 
         if (!process.env.GROQ_API_KEY) {
             return res.status(500).json({
-                error: 'GROQ_API_KEY is not configured in backend/.env'
+                error: 'GROQ_API_KEY is not configured in environment variables.'
             });
         }
 
@@ -836,7 +845,7 @@ app.post('/api/analyze', async (req, res) => {
 
 // ================= FILE UPLOAD & PARSING ROUTE =================
 
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post(['/api/upload', '/upload'], upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No PDF file was uploaded.' });
