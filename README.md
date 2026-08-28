@@ -1,4 +1,5 @@
 # FindMyJob 🚀
+
 > **Multi-Agent AI Candidate Intelligence & Hiring Arbitration Panel**
 
 FindMyJob is an AI-powered recruitment and candidate intelligence system. It ingests candidate resumes, extracts structured career profiles, and dispatches them across a **5-Agent Multi-Model Debate Panel** to evaluate fit, technical depth, communication, and authenticity.
@@ -8,7 +9,7 @@ FindMyJob is an AI-powered recruitment and candidate intelligence system. It ing
 ## 🧠 The 5-Agent Multi-Model Debate Panel
 
 | Agent | Role | Model | Focus |
-| :--- | :--- | :--- | :--- |
+|---|---|---|---|
 | **Agent 1** | **Technical Evaluator** | `openai/gpt-oss-120b` | Evaluates technical depth, architecture design, and system scalability. |
 | **Agent 2** | **HR & Culture Evaluator** | `openai/gpt-oss-20b` | Analyzes communication clarity, self-presentation consistency, and teamwork signals. |
 | **Agent 3** | **Hiring Manager** | `groq/compound` | Assesses practical role fit for Cargonet AI, team needs, and onboarding ramp-up risk. |
@@ -22,7 +23,7 @@ FindMyJob is an AI-powered recruitment and candidate intelligence system. It ing
 - **Applicant Experience**:
   - Interactive Job Details viewer with responsibilities, ecosystem stack, and *"What This Role Is NOT"*.
   - Drag-and-drop PDF resume dropzone with real-time parsing.
-  - Automatic shortlist evaluation ($\ge 80$ score threshold) with congratulations banner and Chief Judge decisive remark.
+  - Automatic shortlist evaluation (≥ 80 score threshold) with congratulations banner and Chief Judge decisive remark.
 - **Employer / Recruiter Dashboard**:
   - Live candidate pipeline connected to an embedded SQLite database.
   - 4-Agent scores and decisive remarks grid on every candidate card.
@@ -36,6 +37,7 @@ FindMyJob is an AI-powered recruitment and candidate intelligence system. It ing
 ## 🛠️ Getting Started
 
 ### 1. Backend Setup
+
 ```bash
 cd backend
 npm install
@@ -45,6 +47,7 @@ node app.js
 ```
 
 ### 2. Frontend Setup
+
 ```bash
 cd frontend
 npm install
@@ -53,5 +56,17 @@ npm run dev
 
 ---
 
+## 🔑 Demo Account
+
+Once the project is set up and running locally, you can log in as an employer using the following demo credentials:
+
+- **Email:** `test@cargonet.ai`
+- **Password:** `promptwars123`
+
+Use this account to explore the employer dashboard, view the live candidate pipeline, and trigger the 5-agent debate panel on sample candidates without needing to register a new account.
+
+---
+
 ## 📄 License
+
 MIT License
